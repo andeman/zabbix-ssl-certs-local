@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+
+import json
+import OpenSSL
+import os
+import argparse
+from datetime import datetime
+from pathlib import Path
+
+def get_days_to_expire(expire_timestamp):
+    year = int(expire_timestamp[:4])
+    month = int(expire_timestamp[4:6])
+    day = int(expire_timestamp[6:8])
+    expire = datetime(year, month, day)
+    time_diff = expire - datetime.now()
+
+    return time_diff.days
+
+def glue(components):
+    return "".join("/{0:s}={1:s}".format(name.decode(), value.decode()) for name, value in components)
+
+def get_datetime(timestamp_binary, date_format = "%Y%m%d%H%M%SZ", encoding = 'ascii'):
+    result = datetime.strptime(timestamp_binary.decode(encoding), date_format)
+    return result
+
+
+def get_cert_info(cert):
+    result = {}
+
+    cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(cert).read())
+    result['days'] = get_days_to_expire(cert.get_notAfter().decode())
+    result['issuer'] = glue(cert.get_issuer().get_components())
+    result['subject'] = glue(cert.get_subject().get_components())
+    result['valid_from_utc'] = get_datetime(cert.get_notBefore()).ctime()
+    result['valid_till_utc'] = get_datetime(cert.get_notAfter()).ctime()
+
+    return result
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        description='zabbix lld discover local ssl certs and get stats about certificates.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        '--suffix-list',
+        nargs='*',
+        default=['.pem', '.crt'],
+        help='List of suffixes to include when specifying directories in paths argument.',
+        required=False
+    )
+    parser.add_argument(
+        '--item',
+        choices=['days','issuer','subject', 'valid_from_utc', 'valid_till_utc'],
+        default='days',
+        help='Output this stats item for the certificate.',
+        required=False
+    )
+    parser.add_argument('mode', choices=['discovery', 'stats'], help='The zabbix lld modus.')
+    parser.add_argument('paths', help='List of comma separated files or directories eg. /etc/pki,/home/user/ssl/cert.pem')
+
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    args = get_args()
+    if args.mode == 'discovery':
+        result = {"data": []}
+        certs = []
+
+        for path in args.paths.split(','):
+            if os.path.isdir(path):
+                for file in Path(path).rglob('*'):
+                    if file.suffix in args.suffix_list:
+                        if file not in certs:
+                            certs.append(file)
+            else:
+                if path not in certs:
+                    certs.append(Path(path))
+
+        for cert in certs:
+            result["data"].append({"{#CERTIFICATE}": "%s" % str(cert)})
+
+        print(json.dumps(result))
+
+    if args.mode == 'stats':
+        if not os.path.isfile(args.paths):
+            raise ValueError("%s should be a single certificate file" % args.paths)
+
+        result = get_cert_info(args.paths)[args.item]
+        print(result)
