@@ -62,7 +62,7 @@
                             <snmp_community/>
                             <snmp_oid/>
                             <key>ssl_certs_local.stats[{#CERTIFICATE},days]</key>
-                            <delay>30s</delay>
+                            <delay>15m</delay>
                             <history>1w</history>
                             <trends>365d</trends>
                             <status>0</status>
@@ -122,7 +122,7 @@
                             <snmp_community/>
                             <snmp_oid/>
                             <key>ssl_certs_local.stats[{#CERTIFICATE},issuer]</key>
-                            <delay>30s</delay>
+                            <delay>15m</delay>
                             <history>1w</history>
                             <trends>0</trends>
                             <status>0</status>
@@ -182,7 +182,7 @@
                             <snmp_community/>
                             <snmp_oid/>
                             <key>ssl_certs_local.stats[{#CERTIFICATE},subject]</key>
-                            <delay>30s</delay>
+                            <delay>15m</delay>
                             <history>1w</history>
                             <trends>0</trends>
                             <status>0</status>
@@ -242,7 +242,7 @@
                             <snmp_community/>
                             <snmp_oid/>
                             <key>ssl_certs_local.stats[{#CERTIFICATE},valid_from_utc]</key>
-                            <delay>30s</delay>
+                            <delay>15m</delay>
                             <history>1w</history>
                             <trends>0</trends>
                             <status>0</status>
@@ -302,7 +302,7 @@
                             <snmp_community/>
                             <snmp_oid/>
                             <key>ssl_certs_local.stats[{#CERTIFICATE},valid_till_utc]</key>
-                            <delay>30s</delay>
+                            <delay>15m</delay>
                             <history>1w</history>
                             <trends>0</trends>
                             <status>0</status>
